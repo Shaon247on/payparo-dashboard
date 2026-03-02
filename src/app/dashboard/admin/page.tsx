@@ -1,0 +1,12 @@
+import AdminPage from '@/components/dashboard/superAdmin/AdminPage'
+import React from 'react'
+
+function page() {
+  return (
+    <div>
+      <AdminPage/>
+    </div>
+  )
+}
+
+export default page
