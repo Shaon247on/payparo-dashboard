@@ -6,7 +6,19 @@ export type AiStatus =
   | "need_human_review"
   | "uncertain";
 
-export type DisputeCurrentStatus = "pending_kyc" | "resolved";
+// All possible EscrowDispute.StatusChoices values from the backend
+export type DisputeCurrentStatus =
+  | "pending_ai"   // AI is analysing
+  | "pending_kyc"  // Waiting for KYC specialist
+  | "accepted"     // Resolved: buyer wins (buyer_correct)
+  | "declined"     // Resolved: seller wins (seller_correct)
+  | "resolved";    // Legacy / generic resolved
+
+/** Returns true for any status that means the dispute is closed */
+export function isDisputeResolved(status: DisputeCurrentStatus): boolean {
+  return status === "accepted" || status === "declined" || status === "resolved";
+}
+
 
 // ─── Unassigned dispute list ──────────────────────────────────────────────────
 

@@ -109,3 +109,9 @@ export async function changePasswordAction(
     body: JSON.stringify(body),
   });
 }
+
+// ─── 4. KYC Specialist self-profile ──────────────────────────────────────────
+
+export async function getKYCProfileAction(): Promise<ActionResult<ProfileResponse>> {
+  return authedFetch<ProfileResponse>("/kyc/profile/");
+}

@@ -8,7 +8,7 @@ import { MobileSidebar } from "./MobileSidebar";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logoutAction } from "@/actions/auth.action";
-import { getProfileAction } from "@/actions/profile.action";
+import { getProfileAction, getKYCProfileAction } from "@/actions/profile.action";
 import { toast } from "sonner";
 import type { ProfileResponse } from "@/types/profile.type";
 
@@ -16,17 +16,19 @@ export function DashboardHeader() {
   const pathname = usePathname();
   const isKyc = pathname.startsWith("/kyc");
   const roleLabel = isKyc ? "KYC Specialist Dashboard" : "Super Admin Dashboard";
-  const route = isKyc ? "/kyc/profile" : "/dashboard/profile";
+  const profileRoute = isKyc ? "/kyc/profile" : "/dashboard/profile";
 
   const [profile, setProfile] = useState<ProfileResponse | null>(null);
 
   useEffect(() => {
-    getProfileAction().then((res) => {
+    // Call the correct endpoint depending on role to avoid a 403
+    const fetchFn = isKyc ? getKYCProfileAction : getProfileAction;
+    fetchFn().then((res) => {
       if (res.success) setProfile(res.data);
     });
-  }, []);
+  }, [isKyc]);
 
-  const initials = profile?.profile_photo?.initials ?? "SA";
+  const initials = profile?.profile_photo?.initials ?? (isKyc ? "KY" : "SA");
   const photoUrl = profile?.profile_photo?.url ?? null;
 
   return (
@@ -39,9 +41,9 @@ export function DashboardHeader() {
       </div>
 
       <div className="flex items-center gap-3">
-        <Link href={route}>
+        <Link href={profileRoute}>
           <Avatar className="w-9 h-9 ring-2 ring-[#00d4aa]/30 cursor-pointer hover:ring-[#00d4aa]/60 transition-all">
-            {photoUrl && <AvatarImage src={photoUrl} alt={profile?.name ?? "Admin"} />}
+            {photoUrl && <AvatarImage src={photoUrl} alt={profile?.name ?? "User"} />}
             <AvatarFallback className="bg-[#0091e5]/20 text-[#0091e5] text-xs font-bold">
               {initials}
             </AvatarFallback>

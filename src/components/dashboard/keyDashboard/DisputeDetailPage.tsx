@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,10 +11,15 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  ShieldCheck,
+  Loader2,
 } from "lucide-react";
 import type { DisputeDetail } from "@/types/kyc/dispute.type";
+import { isDisputeResolved } from "@/types/kyc/dispute.type";
 import type { ChatConversation } from "@/types/kyc/messaging.type";
 import { useDisputeSocket } from "@/lib/hooks/useDisputeSocket";
+import { resolveDisputeAction } from "@/actions/kyc/dispute.action";
+import { toast } from "sonner";
 import ChatPanel from "./ChatPanel";
 import Image from "next/image";
 
@@ -102,15 +108,16 @@ function Lightbox({
 // ─── Image grid ───────────────────────────────────────────────────────────────
 
 function ImageGrid({
-  images,
+  images = [],
   onOpen,
   emptyLabel,
 }: {
-  images: string[];
+  images?: string[];
   onOpen: (i: number) => void;
   emptyLabel: string;
 }) {
   if (images.length === 0) {
+
     return (
       <div className="py-10 text-center text-white/25 text-sm">
         {emptyLabel}
@@ -204,6 +211,29 @@ export default function DisputeDetailPage({
   } | null>(null);
   // Which chat panel is open — null = none
   const [openChat, setOpenChat] = useState<ChatConversation | null>(null);
+  // Resolve modal
+  const [showResolveModal, setShowResolveModal] = useState(false);
+  const [resolveDecision, setResolveDecision] = useState<"buyer_correct" | "seller_correct">("buyer_correct");
+  const [resolveReason, setResolveReason] = useState("");
+  const [isResolving, startResolveTransition] = useTransition();
+  const router = useRouter();
+
+  const handleResolve = () => {
+    if (!resolveReason.trim()) {
+      toast.error("Please provide a reason for your decision.");
+      return;
+    }
+    startResolveTransition(async () => {
+      const res = await resolveDisputeAction(dispute.id, resolveDecision, resolveReason.trim());
+      if (!res.success) {
+        toast.error(res.error);
+        return;
+      }
+      toast.success(res.data.message ?? "Dispute resolved successfully.");
+      setShowResolveModal(false);
+      router.push("/kyc/my-disputes");
+    });
+  };
 
   // ── WebSocket — connects on mount, disconnects on unmount ─────────────────
   const {
@@ -216,8 +246,9 @@ export default function DisputeDetailPage({
 
   const activeImages =
     photoTab === "evidence"
-      ? dispute.escrow_info.images
-      : dispute.escrow_info.main_images;
+      ? (dispute.escrow_info.images ?? [])
+      : (dispute.escrow_info.main_images ?? []);
+
 
   const aiDecisionLabel =
     dispute.ai_result.decision === "favor_buyer"
@@ -229,9 +260,13 @@ export default function DisputeDetailPage({
           : "Uncertain";
 
   const statusLabel =
-    dispute.current_status === "resolved" ? "Resolved" : "Pending Review";
+    dispute.current_status === "accepted" ? "Resolved · Buyer Won"
+    : dispute.current_status === "declined" ? "Resolved · Seller Won"
+    : dispute.current_status === "resolved" ? "Resolved"
+    : "Pending Review";
+
   const statusCls =
-    dispute.current_status === "resolved"
+    isDisputeResolved(dispute.current_status)
       ? "border-emerald-500/40 text-emerald-400 bg-emerald-400/5"
       : "border-amber-500/40 text-amber-400 bg-amber-400/5";
 
@@ -509,14 +544,117 @@ export default function DisputeDetailPage({
 
       {/* Sticky footer */}
       <div className="fixed bottom-0 right-0 left-0 md:left-[220px] lg:left-[240px] bg-[#0f1117]/80 backdrop-blur-sm border-t border-white/5 px-4 md:px-6 lg:px-8 py-4 flex justify-end z-10">
-        <Button
-          disabled
-          className="bg-[#0099ff] hover:bg-[#007acc] text-white font-semibold h-11 px-8 disabled:opacity-50 disabled:cursor-not-allowed"
-          title="Resolution API coming soon"
-        >
-          Resolve Case
-        </Button>
+        {!isDisputeResolved(dispute.current_status) && (
+          <Button
+            onClick={() => setShowResolveModal(true)}
+            className="bg-[#0091e5] hover:bg-[#007acc] text-white font-semibold h-11 px-8 flex items-center gap-2"
+          >
+            <ShieldCheck className="w-4 h-4" />
+            Resolve Case
+          </Button>
+        )}
+        {isDisputeResolved(dispute.current_status) && (
+          <span className="text-emerald-400 text-sm font-semibold flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4" /> {statusLabel}
+          </span>
+        )}
       </div>
+
+      {/* ── Resolve Modal ──────────────────────────────────────────────── */}
+      {showResolveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => !isResolving && setShowResolveModal(false)}
+          />
+
+          {/* Dialog */}
+          <div className="relative z-10 w-full max-w-md bg-[#13151e] border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-5 border-b border-white/5">
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 rounded-md bg-[#0091e5]/10">
+                  <ShieldCheck className="w-4 h-4 text-[#0091e5]" />
+                </div>
+                <h3 className="text-white font-semibold text-base">Resolve Dispute</h3>
+              </div>
+              <button
+                onClick={() => !isResolving && setShowResolveModal(false)}
+                className="text-white/30 hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-5 space-y-5">
+              {/* Decision */}
+              <div className="space-y-2.5">
+                <p className="text-white/50 text-xs font-medium uppercase tracking-wider">Decision</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {([
+                    { value: "buyer_correct",  label: "Buyer Correct",  color: "border-sky-500/40 text-sky-400 bg-sky-500/10"     },
+                    { value: "seller_correct", label: "Seller Correct", color: "border-emerald-500/40 text-emerald-400 bg-emerald-500/10" },
+                  ] as const).map(({ value, label, color }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setResolveDecision(value)}
+                      className={`py-3 rounded-xl border text-sm font-semibold transition-all ${
+                        resolveDecision === value
+                          ? color
+                          : "border-white/10 text-white/40 hover:border-white/20 hover:text-white/60"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Reason */}
+              <div className="space-y-2">
+                <label className="text-white/50 text-xs font-medium uppercase tracking-wider">
+                  Reason / Summary
+                </label>
+                <textarea
+                  value={resolveReason}
+                  onChange={(e) => setResolveReason(e.target.value)}
+                  rows={4}
+                  maxLength={1000}
+                  placeholder="Provide a concise explanation of your decision…"
+                  className="w-full bg-[#0f1117] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/25 resize-none focus:outline-none focus:border-white/25 transition-colors"
+                />
+                <p className="text-white/25 text-xs text-right">{resolveReason.length}/1000</p>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex justify-end gap-3 px-6 py-4 border-t border-white/5">
+              <Button
+                variant="ghost"
+                onClick={() => setShowResolveModal(false)}
+                disabled={isResolving}
+                className="text-white/50 hover:text-white hover:bg-white/5 h-10 px-5"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleResolve}
+                disabled={isResolving || !resolveReason.trim()}
+                className="bg-[#0091e5] hover:bg-[#007acc] text-white font-semibold h-10 px-6 flex items-center gap-2 disabled:opacity-60"
+              >
+                {isResolving ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Resolving…</>
+                ) : (
+                  <><ShieldCheck className="w-4 h-4" /> Confirm Resolution</>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

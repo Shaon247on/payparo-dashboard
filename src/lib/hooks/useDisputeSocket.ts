@@ -8,7 +8,10 @@ import type {
   WsSendReadReceiptPayload,
 } from "@/types/kyc/messaging.type";
 
-const WS_BASE = process.env.NEXT_PUBLIC_WS_BASE_URL ?? "ws://10.10.13.69:9000";
+const WS_BASE = process.env.NEXT_PUBLIC_WS_BASE_URL ?? "ws://localhost:9000";
+
+const MAX_RECONNECT_ATTEMPTS = 5;
+const BASE_BACKOFF_MS = 1000; // 1 s → 2 s → 4 s → …
 
 export interface UseDisputeSocketReturn {
   /** All messages keyed by conversation_id */
@@ -29,6 +32,9 @@ export function useDisputeSocket(
   currentUserId: string,
 ): UseDisputeSocketReturn {
   const wsRef = useRef<WebSocket | null>(null);
+  const reconnectAttemptRef = useRef(0);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMountedRef = useRef(true);
 
   const [messagesByConversation, setMessagesByConversation] = useState<
     Record<string, WsMessage[]>
@@ -41,65 +47,53 @@ export function useDisputeSocket(
   // Track which conversation panel is currently open so we don't count those
   const openConversationRef = useRef<string | null>(null);
 
-  // ── Connect on mount, disconnect on unmount ────────────────────────────────
-  useEffect(() => {
-    if (!accessToken) {
-      console.error("[WS] Missing access token");
-      setStatus("error");
-      return;
-    }
+  // ── Connect (and reconnect) ────────────────────────────────────────────────
+  const connect = useCallback(() => {
+    if (!accessToken || !isMountedRef.current) return;
 
     const url = `${WS_BASE}/ws/user/?token=${accessToken}`;
-
-    console.log("[WS] Connecting to:", url);
-
     const ws = new WebSocket(url);
-
     wsRef.current = ws;
     setStatus("connecting");
 
     ws.onopen = () => {
-      console.log("[WS] Connected successfully");
+      if (!isMountedRef.current) { ws.close(1000, "Component unmounted"); return; }
+      reconnectAttemptRef.current = 0; // reset on successful connection
       setStatus("connected");
     };
 
     ws.onclose = (e) => {
-      console.warn("[WS] Connection closed", {
-        code: e.code,
-        reason: e.reason,
-        wasClean: e.wasClean,
-      });
+      wsRef.current = null;
+      if (!isMountedRef.current) return; // deliberate cleanup — don't reconnect
 
       setStatus("disconnected");
-      wsRef.current = null;
+
+      // Only reconnect on unexpected closes (not a clean 1000/1001)
+      const isAbnormal = e.code !== 1000 && e.code !== 1001;
+      if (isAbnormal && reconnectAttemptRef.current < MAX_RECONNECT_ATTEMPTS) {
+        const delay = BASE_BACKOFF_MS * Math.pow(2, reconnectAttemptRef.current);
+        reconnectAttemptRef.current += 1;
+        reconnectTimerRef.current = setTimeout(connect, delay);
+      }
     };
 
-    ws.onerror = (error) => {
-      console.error("[WS] Connection error:", error);
-      setStatus("error");
+    ws.onerror = () => {
+      // onerror always fires right before onclose; actual close handling is done above
+      if (isMountedRef.current) setStatus("error");
+      ws.close();
     };
 
     ws.onmessage = (event) => {
-      console.log("[WS] Message received:", event.data);
-
       let parsed: WsInboundEvent;
-
       try {
         parsed = JSON.parse(event.data) as WsInboundEvent;
-      } catch (err) {
-        console.error("[WS] Failed to parse message:", err);
+      } catch {
         return;
       }
 
       if (parsed.type === "chat_message") {
         const msg = parsed.message;
         const convId = msg.conversation;
-
-        console.log("[WS] New chat message:", {
-          conversationId: convId,
-          senderId: msg.sender.id,
-          messageId: msg.id,
-        });
 
         setMessagesByConversation((prev) => ({
           ...prev,
@@ -118,33 +112,38 @@ export function useDisputeSocket(
       }
 
       if (parsed.type === "read_receipt") {
-        console.log("[WS] Read receipt received:", parsed);
-
         const { message_ids } = parsed;
-
         setMessagesByConversation((prev) => {
           const updated = { ...prev };
-
           for (const convId of Object.keys(updated)) {
             updated[convId] = updated[convId].map((m) =>
               message_ids.includes(m.id) ? { ...m, is_read: true } : m,
             );
           }
-
           return updated;
         });
       }
     };
+  }, [accessToken, currentUserId]);
+
+  // ── Lifecycle ──────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!accessToken) {
+      setStatus("error");
+      return;
+    }
+
+    isMountedRef.current = true;
+    reconnectAttemptRef.current = 0;
+    connect();
 
     return () => {
-      console.log("[WS] Cleaning up websocket connection");
-
-      ws.close(1000, "Page unmounted");
+      isMountedRef.current = false;
+      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+      wsRef.current?.close(1000, "Page unmounted");
       wsRef.current = null;
     };
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accessToken]); // only re-run if token changes
+  }, [accessToken, connect]);
 
   // ── Send a message ─────────────────────────────────────────────────────────
   const sendMessage = useCallback((conversationId: string, body: string) => {
@@ -161,14 +160,9 @@ export function useDisputeSocket(
   const markRead = useCallback(
     (conversationId: string, messageIds: string[]) => {
       if (messageIds.length === 0) return;
-
-      // Clear local unread count immediately
       setUnreadCounts((prev) => ({ ...prev, [conversationId]: 0 }));
-
-      // Track this as the open panel so incoming messages don't increment
       openConversationRef.current = conversationId;
 
-      // Send read receipt to server
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         const payload: WsSendReadReceiptPayload = {
           type: "read_receipt",
@@ -191,7 +185,6 @@ export function useDisputeSocket(
 }
 
 /** Call this when a chat panel opens/closes so unread tracking knows */
-export function setActiveChatConversation(conversationId: string | null) {
-  // This is handled via the openConversationRef inside the hook.
-  // Components call markRead() on open, which sets openConversationRef internally.
+export function setActiveChatConversation(_conversationId: string | null) {
+  // Handled via openConversationRef inside the hook — components call markRead() on open.
 }

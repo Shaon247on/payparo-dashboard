@@ -7,9 +7,11 @@ import { AlertCircle, Shield, CheckCircle2, Clock } from "lucide-react";
 import AssignedDisputeList from "@/components/dashboard/keyDashboard/AssignedDisputeList";
 
 const STATUS_OPTIONS = [
-  { label: "Pending",  value: "pending_kyc" },
-  { label: "Resolved", value: "resolved" },
+  { label: "Pending Review", value: "pending_kyc" },
+  { label: "Buyer Won",      value: "accepted"    },
+  { label: "Seller Won",     value: "declined"    },
 ];
+
 
 const CONFIDENCE_OPTIONS = [
   { label: "High (≥70%)",     value: "high" },
