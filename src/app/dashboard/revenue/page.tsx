@@ -1,12 +1,5 @@
-import RevenuePage from '@/components/dashboard/superAdmin/RevenuePage'
-import React from 'react'
+import RevenuePage from "@/components/dashboard/superAdmin/RevenuePage";
 
-function page() {
-  return (
-    <div>
-      <RevenuePage/>
-    </div>
-  )
+export default function Page() {
+  return <RevenuePage />;
 }
-
-export default page

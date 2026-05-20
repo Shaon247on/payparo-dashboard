@@ -49,7 +49,7 @@ export default async function AdminAffiliatesPage({ searchParams }: PageProps) {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           { label: "Applications", href: "/dashboard/affiliates", icon: Users, color: "text-[#00d4aa]", bg: "bg-[#00d4aa]/10" },
-          { label: "Withdrawals", href: "/dashboard/affiliates/withdrawals", icon: DollarSign, color: "text-amber-400", bg: "bg-amber-400/10" },
+          { label: "Withdrawals", href: "/dashboard/withdrawals", icon: DollarSign, color: "text-amber-400", bg: "bg-amber-400/10" },
           { label: "Budget Cap", href: "/dashboard/affiliates/budget", icon: Link2, color: "text-blue-400", bg: "bg-blue-400/10" },
           { label: "Fraud Flags", href: "/dashboard/affiliates/fraud", icon: ShieldAlert, color: "text-red-400", bg: "bg-red-400/10" },
         ].map(({ label, href, icon: Icon, color, bg }) => (

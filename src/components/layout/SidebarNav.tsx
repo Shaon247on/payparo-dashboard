@@ -11,6 +11,7 @@ import {
   ClipboardList,
   Diamond,
   Link2,
+  DollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +30,11 @@ const adminNavItems = [
   },
   { label: "Revenue", href: "/dashboard/revenue", icon: TrendingUp },
   { label: "Affiliates", href: "/dashboard/affiliates", icon: Link2 },
+  {
+    label: "Withdraw Requests",
+    href: "/dashboard/withdrawals",
+    icon: DollarSign,
+  },
   { label: "Admin", href: "/dashboard/admin", icon: UserCog },
 ];
 
@@ -45,7 +51,7 @@ export function SidebarNav() {
     <div className="flex flex-col w-full h-full bg-[#13151e] border-r border-white/5">
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-6 py-5 border-b border-white/5">
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-linear-to-br from-[#00d4aa] to-[#0099ff]">
+        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-linear-to-br from-[#0091e5] to-[#1f9a5b]">
           <svg
             viewBox="0 0 24 24"
             fill="none"
@@ -65,7 +71,7 @@ export function SidebarNav() {
           </svg>
         </div>
         <span className="text-white font-bold text-lg tracking-tight">
-          Pay<span className="text-[#00d4aa]">Paro</span>
+          Pay<span className="text-[#0091e5]">Paro</span>
         </span>
       </div>
 
@@ -92,7 +98,7 @@ export function SidebarNav() {
               <Icon
                 className={cn(
                   "w-4 h-4 shrink-0",
-                  isActive ? "text-[#00d4aa]" : "text-white/40",
+                  isActive ? "text-[#0091e5]" : "text-white/40",
                 )}
               />
               {label}

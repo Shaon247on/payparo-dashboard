@@ -1,8 +1,8 @@
 // ─── User Management Types ────────────────────────────────────────────────────
 
-export type KycStatus = "under_review" | "rejected" | "approved" | "pending";
+export type KycStatus = "under_review" | "rejected" | "approved" | "pending" | "not_submitted";
 
-export type BadgeClass = "review" | "rejected" | "approved" | "pending";
+export type BadgeClass = "review" | "rejected" | "approved" | "pending" | "muted";
 
 export interface User {
   id: string;
@@ -12,6 +12,9 @@ export interface User {
   kyc_label: string;
   badge_class: BadgeClass;
   transaction_count: number;
+  is_suspended: boolean;
+  date_joined: string;
+  role: string;
 }
 
 export interface PaginatedUsersResponse {

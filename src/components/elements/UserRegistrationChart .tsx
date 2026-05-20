@@ -14,28 +14,38 @@ import {
   CartesianGrid,
   Cell,
 } from "recharts";
+import type { UserRegistrationChartData } from "@/types/overview.type";
 
-const data = [
-  { month: "Jan", users: 1500 },
-  { month: "Feb", users: 800 },
-  { month: "Mar", users: 1050 },
-  { month: "Apr", users: 200 },
-  { month: "May", users: 1900 },
-];
+interface UserRegistrationChartProps {
+  chartData?: UserRegistrationChartData[];
+}
 
 const chartConfig = {
   users: {
-    label: "Users",
+    label: "Registrations",
     color: "#00aaff",
   },
 } satisfies ChartConfig;
 
-export function UserRegistrationChart() {
+export function UserRegistrationChart({ chartData }: UserRegistrationChartProps) {
+  const data = chartData
+    ? chartData.map((d) => ({
+        month: d.month,
+        users: d.registrations,
+      }))
+    : [
+        { month: "Jan", users: 0 },
+        { month: "Feb", users: 0 },
+        { month: "Mar", users: 0 },
+        { month: "Apr", users: 0 },
+        { month: "May", users: 0 },
+      ];
+
   return (
     <Card className="bg-[#13151e] border-white/5 w-full shrink-0">
       <CardHeader className="pb-2 px-5 pt-5">
         <CardTitle className="text-white text-base font-semibold">
-          User Registration
+          User Registrations
         </CardTitle>
       </CardHeader>
       <CardContent className="px-2 pb-4">
@@ -61,7 +71,6 @@ export function UserRegistrationChart() {
               axisLine={false}
               tickLine={false}
               width={40}
-              ticks={[0, 200, 500, 1000, 1500, 2000]}
             />
             <ChartTooltip
               content={

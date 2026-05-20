@@ -4,28 +4,29 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MoreVertical } from "lucide-react";
 import Pagination from "@/components/shared/Pagination";
 import { assignDisputeAction } from "@/actions/kyc/dispute.action";
 import type { PaginatedUnassignedDisputeResponse, UnassignedDispute } from "@/types/kyc/dispute.type";
 import { toast } from "sonner";
-import Link from "next/link";
+import {
+  AlertTriangle,
+  ArrowRight,
+  Calendar,
+  DollarSign,
+  Loader2,
+  ShieldAlert,
+  Tag,
+} from "lucide-react";
 
 const PAGE_SIZE = 10;
 
-// ── AI status badge config ────────────────────────────────────────────────────
+// ── AI verdict config ─────────────────────────────────────────────────────────
 
-const AI_STATUS_CONFIG: Record<string, { label: string; cls: string }> = {
-  favor_buyer:        { label: "Favor Buyer",        cls: "border-[#0099ff]/50 text-[#0099ff]" },
-  favor_seller:       { label: "Favor Seller",        cls: "border-emerald-500/50 text-emerald-400" },
-  need_human_review:  { label: "Need Human Review",   cls: "border-amber-500/50 text-amber-400" },
-  uncertain:          { label: "Uncertain",            cls: "border-white/20 text-white/50" },
+const AI_STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; border: string }> = {
+  favor_buyer:       { label: "Favor Buyer",       bg: "bg-sky-500/10",   text: "text-sky-400",   border: "border-sky-500/25"   },
+  favor_seller:      { label: "Favor Seller",      bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-emerald-500/25" },
+  need_human_review: { label: "Needs Review",      bg: "bg-amber-500/10", text: "text-amber-400", border: "border-amber-500/25"  },
+  uncertain:         { label: "Uncertain",          bg: "bg-white/5",      text: "text-white/40",  border: "border-white/10"     },
 };
 
 function formatDate(iso: string) {
@@ -34,9 +35,9 @@ function formatDate(iso: string) {
   });
 }
 
-// ── Row ───────────────────────────────────────────────────────────────────────
+// ── Card row ──────────────────────────────────────────────────────────────────
 
-function DisputeRow({ dispute }: { dispute: UnassignedDispute }) {
+function DisputeCard({ dispute }: { dispute: UnassignedDispute }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const badge = AI_STATUS_CONFIG[dispute.ai_status] ?? AI_STATUS_CONFIG.uncertain;
@@ -54,99 +55,146 @@ function DisputeRow({ dispute }: { dispute: UnassignedDispute }) {
   };
 
   return (
-    <Card className="bg-[#0f1117] border-white/5 hover:border-white/10 transition-colors">
-      <CardContent className="px-5 py-4">
-        <div className="grid grid-cols-2 md:grid-cols-[1fr_1fr_1fr_1fr_auto_auto] gap-4 items-center">
-          {/* Product + order */}
-          <div>
-            <p className="text-white/35 text-xs mb-1 font-mono">{dispute.order_id}</p>
-            <p className="text-white text-sm font-medium">{dispute.product_name}</p>
-          </div>
-
-          {/* Reason */}
-          <div>
-            <p className="text-white/35 text-xs mb-1">Reason</p>
-            <p className="text-white text-sm font-medium">{dispute.reason}</p>
-          </div>
-
-          {/* Amount */}
-          <div>
-            <p className="text-white/35 text-xs mb-1">Escrow Amount</p>
-            <p className="text-white text-sm font-medium">${dispute.escrow_price}</p>
-          </div>
-
-          {/* Date */}
-          <div>
-            <p className="text-white/35 text-xs mb-1">Submitted</p>
-            <p className="text-white text-sm font-medium">{formatDate(dispute.created_at)}</p>
-          </div>
-
-          {/* AI status badge */}
-          <div className="col-span-2 md:col-span-1">
-            <span className={`inline-block border rounded-full px-4 py-1.5 text-xs font-semibold ${badge.cls}`}>
-              {badge.label}
-            </span>
-          </div>
-
-          {/* Actions menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="w-8 h-8 text-white/30 hover:text-white hover:bg-white/10 shrink-0"
-              >
-                <MoreVertical className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="bg-[#1a1d27] border-white/10 text-white min-w-[150px]"
-            >
-              <DropdownMenuItem
-                onClick={handleAssign}
-                disabled={isPending}
-                className="cursor-pointer hover:bg-white/5 focus:bg-white/5"
-              >
-                {isPending ? "Assigning…" : "Assign to Me"}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+    <div className="bg-[#13151e] border border-white/5 hover:border-white/10 rounded-xl p-5 transition-all group">
+      {/* Top row: order id + AI badge */}
+      <div className="flex items-start justify-between gap-3 mb-4">
+        <div>
+          <p className="text-white/35 text-[11px] font-mono mb-0.5 tracking-wider">
+            {dispute.order_id}
+          </p>
+          <h3 className="text-white text-sm font-semibold leading-snug line-clamp-1">
+            {dispute.product_name}
+          </h3>
         </div>
-      </CardContent>
-    </Card>
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border shrink-0 ${badge.bg} ${badge.text} ${badge.border}`}>
+          {badge.label}
+        </span>
+      </div>
+
+      {/* Meta grid */}
+      <div className="grid grid-cols-3 gap-3 mb-5">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-1 text-white/30">
+            <Tag className="w-3 h-3" />
+            <span className="text-[11px]">Reason</span>
+          </div>
+          <span className="text-white/70 text-xs font-medium line-clamp-1">{dispute.reason}</span>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-1 text-white/30">
+            <DollarSign className="w-3 h-3" />
+            <span className="text-[11px]">Value</span>
+          </div>
+          <span className="text-white/70 text-xs font-medium">
+            ${Number(dispute.escrow_price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </span>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-1 text-white/30">
+            <Calendar className="w-3 h-3" />
+            <span className="text-[11px]">Filed</span>
+          </div>
+          <span className="text-white/70 text-xs font-medium">{formatDate(dispute.created_at)}</span>
+        </div>
+      </div>
+
+      {/* Action */}
+      <div className="pt-4 border-t border-white/5 flex justify-end">
+        <Button
+          onClick={handleAssign}
+          disabled={isPending}
+          size="sm"
+          className="bg-[#0091e5] hover:bg-[#007acc] text-white text-xs font-semibold h-8 px-4 rounded-lg flex items-center gap-1.5 transition-all shadow-md shadow-[#0091e5]/10 disabled:opacity-60"
+        >
+          {isPending ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <ArrowRight className="w-3.5 h-3.5" />
+          )}
+          {isPending ? "Claiming…" : "Claim Case"}
+        </Button>
+      </div>
+    </div>
   );
 }
 
-// ── List ──────────────────────────────────────────────────────────────────────
+// ── Empty state ───────────────────────────────────────────────────────────────
+
+function EmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 text-center">
+      <div className="p-4 rounded-2xl bg-emerald-500/10 mb-4">
+        <ShieldAlert className="w-8 h-8 text-emerald-400" />
+      </div>
+      <p className="text-white font-semibold text-base">All disputes cleared</p>
+      <p className="text-white/40 text-sm mt-1.5 max-w-xs">
+        No disputes match your current filters. The queue is up to date.
+      </p>
+    </div>
+  );
+}
+
+// ── Main list ─────────────────────────────────────────────────────────────────
 
 interface UnassignedDisputeListProps {
   data: PaginatedUnassignedDisputeResponse;
 }
 
 export default function UnassignedDisputeList({ data }: UnassignedDisputeListProps) {
+  const needsReview = data.results.filter((d) => d.ai_status === "need_human_review").length;
+  const favorBuyer  = data.results.filter((d) => d.ai_status === "favor_buyer").length;
+  const favorSeller = data.results.filter((d) => d.ai_status === "favor_seller").length;
+
   return (
-    <Card className="bg-[#13151e] border-white/5">
-      <CardHeader className="px-5 pt-5 pb-4 border-b border-white/5">
-        <CardTitle className="text-white text-base font-semibold">
-          All Disputes
-          <span className="ml-2 text-white/30 font-normal text-sm">
-            ({data.count} result{data.count !== 1 ? "s" : ""})
-          </span>
-        </CardTitle>
-      </CardHeader>
+    <div className="space-y-5">
+      {/* Summary strip */}
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: "Total in Queue", value: data.count,    icon: AlertTriangle, color: "text-white/60",  bg: "bg-white/5"          },
+          { label: "Favor Buyer",    value: favorBuyer,    icon: ShieldAlert,   color: "text-sky-400",   bg: "bg-sky-500/10"       },
+          { label: "Needs Review",   value: needsReview,   icon: ShieldAlert,   color: "text-amber-400", bg: "bg-amber-500/10"     },
+        ].map(({ label, value, icon: Icon, color, bg }) => (
+          <Card key={label} className="bg-[#13151e] border-white/5">
+            <CardContent className="flex items-center gap-3 p-4">
+              <div className={`p-1.5 rounded-md ${bg}`}>
+                <Icon className={`w-4 h-4 ${color}`} />
+              </div>
+              <div>
+                <p className="text-white/40 text-xs">{label}</p>
+                <p className="text-white font-bold text-lg leading-none mt-0.5">{value}</p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
-      <CardContent className="p-4 space-y-3">
-        {data.results.length === 0 ? (
-          <div className="py-14 text-center text-white/25 text-sm">
-            No disputes match your filters.
-          </div>
-        ) : (
-          data.results.map((d) => <DisputeRow key={d.id} dispute={d} />)
-        )}
-      </CardContent>
+      {/* Card grid */}
+      <Card className="bg-[#0f1117] border-white/5">
+        <CardHeader className="px-5 pt-5 pb-4 border-b border-white/5">
+          <CardTitle className="text-white text-base font-semibold flex items-center gap-2">
+            Unassigned Disputes
+            <span className="text-white/30 font-normal text-sm">
+              ({data.count} case{data.count !== 1 ? "s" : ""})
+            </span>
+          </CardTitle>
+        </CardHeader>
 
-      <Pagination totalCount={data.count} pageSize={PAGE_SIZE} paramKey="page" />
-    </Card>
+        <CardContent className="p-4">
+          {data.results.length === 0 ? (
+            <EmptyState />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {data.results.map((d) => (
+                <DisputeCard key={d.id} dispute={d} />
+              ))}
+            </div>
+          )}
+        </CardContent>
+
+        <Pagination totalCount={data.count} pageSize={PAGE_SIZE} paramKey="page" />
+      </Card>
+    </div>
   );
 }

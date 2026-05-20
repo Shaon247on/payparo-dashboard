@@ -10,6 +10,7 @@ import type {
   AffiliateGlobalBudget,
   PaginatedFraudFlags,
 } from "@/types/affiliate.type";
+import type { PaginatedUserWithdrawals } from "@/types/withdrawal.type";
 
 const BASE = (process.env.BACKEND_BASE_URL ?? "http://localhost:8000/api").replace(/\/api$/, "");
 
@@ -138,6 +139,44 @@ export async function updateAffiliateWithdrawalStatusAction(
   const token = await getValidAccessToken();
   if (!token) redirect("/login");
   return adminFetch(`/api/administration/affiliates/withdrawals/${id}/status/`, token, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+// ─── User Withdrawals ─────────────────────────────────────────────────────────
+
+export async function getAdminUserWithdrawalsAction(params?: {
+  status?: string;
+  method?: string;
+  q?: string;
+  page?: number;
+}): Promise<ActionResult<PaginatedUserWithdrawals>> {
+  const token = await getValidAccessToken();
+  if (!token) redirect("/login");
+
+  const sp = new URLSearchParams();
+  if (params?.status && params.status !== "all") sp.set("status", params.status);
+  if (params?.method && params.method !== "all") sp.set("method", params.method);
+  if (params?.q?.trim()) sp.set("q", params.q.trim());
+  if (params?.page && params.page > 1) sp.set("page", String(params.page));
+
+  return adminFetch<PaginatedUserWithdrawals>(
+    `/api/administration/withdraw-requests/${sp.toString() ? `?${sp}` : ""}`,
+    token
+  );
+}
+
+export async function updateUserWithdrawalStatusAction(
+  id: string,
+  body: {
+    status: "completed" | "failed";
+    rejection_reason?: string;
+  }
+): Promise<ActionResult<{ success: boolean; status: string; description?: string }>> {
+  const token = await getValidAccessToken();
+  if (!token) redirect("/login");
+  return adminFetch(`/api/administration/withdraw-requests/${id}/status/`, token, {
     method: "PATCH",
     body: JSON.stringify(body),
   });

@@ -14,18 +14,11 @@ import {
   CartesianGrid,
   Dot,
 } from "recharts";
+import type { EscrowChartData } from "@/types/overview.type";
 
-const data = [
-  { month: "Jan", escrow: 0 },
-  { month: "Feb", escrow: 60000 },
-  { month: "Mar", escrow: 55000 },
-  { month: "Apr", escrow: 40000 },
-  { month: "May", escrow: 17000 },
-  { month: "Jun", escrow: 48000 },
-  { month: "Jul", escrow: 63000 },
-  { month: "Aug", escrow: 52000 },
-  { month: "Sep", escrow: 95000 },
-];
+interface EscrowLineChartProps {
+  chartData?: EscrowChartData[];
+}
 
 const chartConfig = {
   escrow: {
@@ -36,16 +29,31 @@ const chartConfig = {
 
 const formatYAxis = (value: number) => {
   if (value === 0) return "$0";
-  if (value >= 1000) return `${value / 1000}k`;
-  return `${value}`;
+  if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
+  if (value >= 1000) return `$${(value / 1000).toFixed(0)}k`;
+  return `$${value}`;
 };
 
-export function EscrowLineChart() {
+export function EscrowLineChart({ chartData }: EscrowLineChartProps) {
+  const data = chartData
+    ? chartData.map((d) => ({
+        month: d.month.substring(0, 3),
+        escrow: d.volume,
+      }))
+    : [
+        { month: "Jan", escrow: 0 },
+        { month: "Feb", escrow: 0 },
+        { month: "Mar", escrow: 0 },
+        { month: "Apr", escrow: 0 },
+        { month: "May", escrow: 0 },
+        { month: "Jun", escrow: 0 },
+      ];
+
   return (
     <Card className="bg-[#13151e] border-white/5 flex-1">
       <CardHeader className="pb-2 px-5 pt-5">
         <CardTitle className="text-white text-base font-semibold">
-          Total Escrow
+          Total Escrow Volume
         </CardTitle>
       </CardHeader>
       <CardContent className="px-2 pb-4">
@@ -79,7 +87,7 @@ export function EscrowLineChart() {
                   className="bg-white text-gray-900 border-0 shadow-xl rounded-xl px-3 py-2"
                   formatter={(value) => [
                     <span key="val" className="text-[#0099ff] font-semibold">
-                      Escrow : {value}
+                      Volume : ${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
                     </span>,
                     "",
                   ]}

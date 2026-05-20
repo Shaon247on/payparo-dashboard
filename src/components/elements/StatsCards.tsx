@@ -1,41 +1,46 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, UserCheck, Wallet, AlertTriangle } from "lucide-react";
+import type { OverviewStats } from "@/types/overview.type";
 
-const stats = [
-  {
-    label: "Total Users",
-    value: "12,202",
-    icon: Users,
-    iconColor: "text-white/70",
-    iconBg: "bg-white/10",
-  },
-  {
-    label: "Pending KYC",
-    value: "23",
-    icon: UserCheck,
-    iconColor: "text-amber-400",
-    iconBg: "bg-amber-400/10",
-  },
-  {
-    label: "Active Escrow",
-    value: "SAR 31,236",
-    icon: Wallet,
-    iconColor: "text-emerald-400",
-    iconBg: "bg-emerald-400/10",
-  },
-  {
-    label: "Open Disputes",
-    value: "710",
-    icon: AlertTriangle,
-    iconColor: "text-red-400",
-    iconBg: "bg-red-400/10",
-  },
-];
+interface StatsCardsProps {
+  data?: OverviewStats;
+}
 
-export function StatsCards() {
+export function StatsCards({ data }: StatsCardsProps) {
+  const statsList = [
+    {
+      label: "Total Users",
+      value: data ? data.total_users.toLocaleString() : "0",
+      icon: Users,
+      iconColor: "text-white/70",
+      iconBg: "bg-white/10",
+    },
+    {
+      label: "Pending KYC",
+      value: data ? data.pending_kyc.toLocaleString() : "0",
+      icon: UserCheck,
+      iconColor: "text-amber-400",
+      iconBg: "bg-amber-400/10",
+    },
+    {
+      label: "Active Escrow",
+      value: data ? `$${data.active_escrow_volume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD` : "$0.00 USD",
+      icon: Wallet,
+      iconColor: "text-emerald-400",
+      iconBg: "bg-emerald-400/10",
+    },
+    {
+      label: "Open Disputes",
+      value: data ? data.open_disputes.toLocaleString() : "0",
+      icon: AlertTriangle,
+      iconColor: "text-red-400",
+      iconBg: "bg-red-400/10",
+    },
+  ];
+
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-      {stats.map(({ label, value, icon: Icon, iconColor, iconBg }) => (
+      {statsList.map(({ label, value, icon: Icon, iconColor, iconBg }) => (
         <Card
           key={label}
           className="bg-[#13151e] border-white/5 hover:border-white/10 transition-colors"

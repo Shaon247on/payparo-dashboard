@@ -117,3 +117,19 @@ export async function getDisputeDetailAction(
 ): Promise<ActionResult<DisputeDetailResponse>> {
   return authedFetch<DisputeDetailResponse>(`/kyc/disputes/assigned/${id}/`);
 }
+
+// ─── 5. Resolve dispute ───────────────────────────────────────────────────────
+
+export async function resolveDisputeAction(
+  id: string,
+  decision: "buyer_correct" | "seller_correct",
+  reason: string
+): Promise<ActionResult<{ success: boolean; status: string; message: string; penalty_charged?: boolean }>> {
+  return authedFetch<{ success: boolean; status: string; message: string; penalty_charged?: boolean }>(
+    `/kyc/disputes/${id}/kyc-resolve/`,
+    {
+      method: "POST",
+      body: JSON.stringify({ decision, reason }),
+    }
+  );
+}
