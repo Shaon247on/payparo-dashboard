@@ -4,9 +4,13 @@ import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SidebarNav } from "./SidebarNav";
+import { AffiliateSidebarNav } from "./AffiliateSidebarNav";
+import { usePathname } from "next/navigation";
 
 export function MobileSidebar() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const isAffiliateRoute = pathname.startsWith("/affiliate");
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -23,7 +27,7 @@ export function MobileSidebar() {
         side="left"
         className="p-0 w-60 bg-[#13151e] border-r border-white/5"
       >
-        <SidebarNav />
+        {isAffiliateRoute ? <AffiliateSidebarNav /> : <SidebarNav />}
       </SheetContent>
     </Sheet>
   );

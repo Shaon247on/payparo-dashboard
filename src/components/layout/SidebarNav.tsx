@@ -10,6 +10,7 @@ import {
   UserCog,
   ClipboardList,
   Diamond,
+  Link2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +28,7 @@ const adminNavItems = [
     icon: ShieldAlert,
   },
   { label: "Revenue", href: "/dashboard/revenue", icon: TrendingUp },
+  { label: "Affiliates", href: "/dashboard/affiliates", icon: Link2 },
   { label: "Admin", href: "/dashboard/admin", icon: UserCog },
 ];
 

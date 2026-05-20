@@ -4,7 +4,11 @@ const SESSION_COOKIE = "pp_session";
 const ROLE_COOKIE = "pp_role";
 
 // All paths that require a session
-const PROTECTED_PATHS = ["/dashboard", "/kyc"];
+const PROTECTED_PATHS = [
+  "/dashboard",
+  "/kyc",
+  "/affiliate",
+];
 
 // Auth pages — logged-in users should not see these
 const AUTH_PATHS = ["/login", "/register"];
@@ -13,12 +17,14 @@ const AUTH_PATHS = ["/login", "/register"];
 const ROLE_HOME: Record<string, string> = {
   admin: "/dashboard",
   kyc: "/kyc",
+  affiliate: "/affiliate",
 };
 
 // Routes only specific roles may access
 const ROLE_RESTRICTED: { path: string; allowedRoles: string[] }[] = [
   { path: "/dashboard", allowedRoles: ["admin"] },
   { path: "/kyc", allowedRoles: ["kyc"] },
+  { path: "/affiliate", allowedRoles: ["affiliate"] },
 ];
 
 function matchesPath(pathname: string, base: string) {

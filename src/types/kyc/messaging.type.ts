@@ -11,6 +11,7 @@ export interface WsMessage {
   body: string;
   image: string | null;
   reply_to: string | null;
+  reply_to_info?: ReplyToInfo | null;
   is_read: boolean;
   created_at: string;
 }

@@ -17,6 +17,7 @@ import type { ActionResult, LoginFormValues, Session } from "@/types/auth.type";
 const ROLE_REDIRECT: Record<string, string> = {
   admin: "/dashboard",
   kyc: "/kyc",
+  affiliate: "/affiliate",
 };
 
 const DEFAULT_REDIRECT = "/dashboard";

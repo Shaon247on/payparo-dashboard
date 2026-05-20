@@ -68,7 +68,8 @@ async function proxyRequest(
   // Build forward headers — strip host to avoid conflicts
   const forwardHeaders = new Headers();
   req.headers.forEach((value, key) => {
-    if (!["host", "connection"].includes(key.toLowerCase())) {
+    const k = key.toLowerCase();
+    if (!["host", "connection", "content-length"].includes(k)) {
       forwardHeaders.set(key, value);
     }
   });
@@ -108,7 +109,13 @@ async function proxyRequest(
     if (contentType.includes("application/json")) {
       body = await req.text();
     } else if (contentType.includes("multipart/form-data")) {
-      body = await req.formData();
+      const incomingForm = await req.formData();
+      const outgoingForm = new FormData();
+      incomingForm.forEach((value, key) => {
+        outgoingForm.append(key, value);
+      });
+      body = outgoingForm;
+      forwardHeaders.delete("content-type");
     } else {
       body = await req.blob();
     }

@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { DashboardHeader } from "./DashboardHeader";
 import { SidebarNav } from "./SidebarNav";
+import { AffiliateSidebarNav } from "./AffiliateSidebarNav";
 
 export default function DashboardLayout({
   children,
@@ -11,19 +12,21 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
 
-  const protectedRoutes = ["/dashboard", "/kyc"];
+  const protectedRoutes = ["/dashboard", "/kyc", "/affiliate"];
 
   const isProtectedRoute = protectedRoutes.some(
     (route) =>
       pathname === route || pathname.startsWith(`${route}/`)
   );
 
+  const isAffiliateRoute = pathname.startsWith("/affiliate");
+
   return (
     <div className="flex h-screen bg-[#0f1117] overflow-hidden">
       {/* Sidebar */}
       {isProtectedRoute && (
         <aside className="hidden lg:flex md:w-55 lg:w-60 shrink-0">
-          <SidebarNav />
+          {isAffiliateRoute ? <AffiliateSidebarNav /> : <SidebarNav />}
         </aside>
       )}
 
