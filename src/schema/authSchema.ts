@@ -3,42 +3,18 @@ import { z } from "zod";
 export const loginSchema = z.object({
   email: z
     .string()
-    .trim()
     .min(1, "Email is required")
-    .email("Invalid email address"),
-
+    .email("Enter a valid email address"),
   password: z
     .string()
-    .min(6, "Password must be at least 6 characters")
-    .max(100, "Password is too long"),
+    .min(1, "Password is required")
+    .min(5, "Password must be at least 5 characters"),
 });
 
-// new
-export const forgotPasswordSchema = z.object({
-  email: z.string().email("Invalid email address"),
+export type LoginFormValues = z.infer<typeof loginSchema>;
+
+export const refreshSchema = z.object({
+  refresh: z.string().min(1, "Refresh token is required"),
 });
 
-export const otpSchema = z.object({
-  otp: z.tuple([
-    z.string().length(1),
-    z.string().length(1),
-    z.string().length(1),
-    z.string().length(1),
-    z.string().length(1),
-    z.string().length(1),
-  ]),
-});
-
-export const setNewPasswordSchema = z
-  .object({
-    password: z
-      .string()
-      .min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
-
-export type LoginInput = z.infer<typeof loginSchema>;
+export type RefreshFormValues = z.infer<typeof refreshSchema>;

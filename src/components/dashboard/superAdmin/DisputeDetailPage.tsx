@@ -2,11 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ImageIcon } from "lucide-react";
 
-export default function DisputeDetailPage({
-  params,
-}: {
-  params?: { id: string };
-}) {
+export default function DisputeDetailPage() {
   return (
     <div className="space-y-5">
       <div>
@@ -55,7 +51,7 @@ export default function DisputeDetailPage({
                   {[0, 1].map((i) => (
                     <div
                       key={i}
-                      className="aspect-[4/3] bg-[#1a1d27] border border-white/5 rounded-xl flex items-center justify-center"
+                      className="aspect-4/3 bg-[#1a1d27] border border-white/5 rounded-xl flex items-center justify-center"
                     >
                       <ImageIcon className="w-8 h-8 text-white/15" />
                     </div>

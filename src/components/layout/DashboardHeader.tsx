@@ -5,6 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MobileSidebar } from "./MobileSidebar";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { logoutAction } from "@/actions/auth.action";
+import { toast } from "sonner";
 
 export function DashboardHeader() {
   const pathname = usePathname();
@@ -34,8 +36,12 @@ export function DashboardHeader() {
             </AvatarFallback>
           </Avatar>
         </Link>
-        <Link href={"/login"}>
+        
           <Button
+          onClick={()=>{
+            logoutAction()
+            toast.success("Logout Successfully")
+          }}
             variant="ghost"
             size="sm"
             className="text-white/60 hover:text-white hover:bg-white/10 gap-2"
@@ -43,7 +49,7 @@ export function DashboardHeader() {
             <LogOut className="w-4 h-4" />
             <span className="hidden sm:inline text-sm font-medium">Logout</span>
           </Button>
-        </Link>
+        
       </div>
     </header>
   );
