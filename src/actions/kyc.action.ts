@@ -12,6 +12,45 @@ import type {
   VerifyInviteTokenResponse,
 } from "@/types/kyc.type";
 
+// We'll define inline interfaces for the new KYC approval since they don't exist yet in kyc.type.ts
+export interface PendingKycIdentity {
+  id: string;
+  id_number: string;
+  full_name: string;
+  father_name: string;
+  mother_name: string;
+  date_of_birth: string;
+  present_address: string;
+  permanent_address: string;
+  gender: string;
+}
+
+export interface PendingKycDocument {
+  id: string;
+  document_type: "id_front" | "id_back" | "face_front" | "face_left" | "face_right";
+  url: string | null;
+  uploaded_at: string;
+}
+
+export interface PendingKycSubmission {
+  id: string;
+  user_email: string;
+  user_name: string;
+  status: "pending" | "under_review" | "approved" | "rejected";
+  rejection_reason: string;
+  submitted_at: string;
+  reviewed_at: string | null;
+  identity: PendingKycIdentity;
+  documents: PendingKycDocument[];
+}
+
+export interface PaginatedPendingKycResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: PendingKycSubmission[];
+}
+
 const BASE = process.env.BACKEND_BASE_URL!;
 
 // ─── Shared authenticated fetch helper ───────────────────────────────────────
@@ -154,4 +193,29 @@ export async function removeKycAdminAction(
   return authedFetch<{ success: boolean }>(`/auth/admin/kyc/${id}/`, {
     method: "DELETE",
   });
+}
+
+// ─── 7. Get pending KYC submissions ──────────────────────────────────────────
+
+export async function getPendingKycAction(
+  page = 1,
+  status = "under_review"
+): Promise<ActionResult<PaginatedPendingKycResponse>> {
+  return authedFetch<PaginatedPendingKycResponse>(`/auth/admin/kyc/pending/?page=${page}&status=${status}`);
+}
+
+// ─── 8. Review KYC submission ────────────────────────────────────────────────
+
+export async function reviewKycAction(
+  id: string,
+  action: "approve" | "reject",
+  reason?: string
+): Promise<ActionResult<{ success: boolean; message: string; status: string }>> {
+  return authedFetch<{ success: boolean; message: string; status: string }>(
+    `/auth/admin/kyc/${id}/review/`,
+    {
+      method: "POST",
+      body: JSON.stringify({ action, reason }),
+    }
+  );
 }

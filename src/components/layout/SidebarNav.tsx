@@ -12,6 +12,7 @@ import {
   Diamond,
   Link2,
   DollarSign,
+  UserCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +28,11 @@ const adminNavItems = [
     label: "Manage Dispute",
     href: "/dashboard/disputes",
     icon: ShieldAlert,
+  },
+  {
+    label: "KYC Approvals",
+    href: "/dashboard/kyc-pending",
+    icon: UserCheck,
   },
   { label: "Revenue", href: "/dashboard/revenue", icon: TrendingUp },
   { label: "Affiliates", href: "/dashboard/affiliates", icon: Link2 },

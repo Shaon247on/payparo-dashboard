@@ -64,23 +64,32 @@ export async function setSession(session: Session): Promise<void> {
   const maxAge = 60 * 60 * 24; // 24 hours
 
   // Encrypted session — HttpOnly, never readable by JS or middleware
-  cookieStore.set(COOKIE_NAME, encrypted, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge,
-  });
+  try {
+    cookieStore.set(COOKIE_NAME, encrypted, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge,
+    });
+  } catch (err) {
+    // Safe to ignore or log as warning — happens during page rendering/SSR.
+    console.warn("Failed to set session cookie (likely during SSR):", err);
+  }
 
   // Plain role cookie — NOT HttpOnly so Edge middleware can read it.
   // Contains no sensitive data; the encrypted cookie is the real auth gate.
-  cookieStore.set(ROLE_COOKIE, session.user.role, {
-    httpOnly: false,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge,
-  });
+  try {
+    cookieStore.set(ROLE_COOKIE, session.user.role, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge,
+    });
+  } catch (err) {
+    console.warn("Failed to set role cookie (likely during SSR):", err);
+  }
 }
 
 /** Read and decrypt the session cookie. Returns null if absent/invalid. */
@@ -111,6 +120,14 @@ export async function updateAccessToken(
 /** Delete the session cookie (logout). */
 export async function clearSession(): Promise<void> {
   const cookieStore = await cookies();
-  cookieStore.delete(COOKIE_NAME);
-  cookieStore.delete(ROLE_COOKIE);
+  try {
+    cookieStore.delete(COOKIE_NAME);
+  } catch (err) {
+    console.warn("Failed to delete session cookie (likely during SSR):", err);
+  }
+  try {
+    cookieStore.delete(ROLE_COOKIE);
+  } catch (err) {
+    console.warn("Failed to delete role cookie (likely during SSR):", err);
+  }
 }

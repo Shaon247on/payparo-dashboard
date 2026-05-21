@@ -242,6 +242,7 @@ export default function DisputeDetailPage({
     sendMessage,
     markRead,
     status: wsStatus,
+    loadHistory,
   } = useDisputeSocket(accessToken, currentUserId ?? "");
 
   const activeImages =
@@ -271,6 +272,7 @@ export default function DisputeDetailPage({
       : "border-amber-500/40 text-amber-400 bg-amber-400/5";
 
   const openChatFor = (conversation: ChatConversation) => {
+    loadHistory(conversation.conversationId);
     setOpenChat(conversation);
   };
 

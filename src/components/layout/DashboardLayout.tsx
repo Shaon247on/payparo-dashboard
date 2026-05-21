@@ -1,6 +1,8 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
+import { syncSessionAction } from "@/actions/auth.action";
 import { DashboardHeader } from "./DashboardHeader";
 import { SidebarNav } from "./SidebarNav";
 import { AffiliateSidebarNav } from "./AffiliateSidebarNav";
@@ -20,6 +22,15 @@ export default function DashboardLayout({
   );
 
   const isAffiliateRoute = pathname.startsWith("/affiliate");
+
+  // Synchronize session cookie if needed when entering protected routes
+  useEffect(() => {
+    if (isProtectedRoute) {
+      syncSessionAction().catch((err) => {
+        console.error("Failed to sync session cookie in background:", err);
+      });
+    }
+  }, [isProtectedRoute, pathname]);
 
   return (
     <div className="flex h-screen bg-[#0f1117] overflow-hidden">

@@ -7,6 +7,7 @@ import type {
   WsSendMessagePayload,
   WsSendReadReceiptPayload,
 } from "@/types/kyc/messaging.type";
+import { getConversationMessagesAction } from "@/actions/kyc/message.action";
 
 const WS_BASE = process.env.NEXT_PUBLIC_WS_BASE_URL ?? "ws://localhost:9000";
 
@@ -24,6 +25,38 @@ export interface UseDisputeSocketReturn {
   markRead: (conversationId: string, messageIds: string[]) => void;
   /** WebSocket connection status */
   status: "connecting" | "connected" | "disconnected" | "error";
+  /** Load message history for a conversation */
+  loadHistory: (conversationId: string) => Promise<void>;
+}
+
+/** Robust mapping to normalize WebSocket and REST API message formats */
+function mapMsg(msg: any): WsMessage {
+  const senderObj =
+    typeof msg.sender === "object" && msg.sender !== null
+      ? msg.sender
+      : msg.sender_info
+        ? {
+            id: msg.sender_info.id,
+            username: msg.sender_info.username,
+            full_name: msg.sender_info.full_name,
+          }
+        : {
+            id: String(msg.sender),
+            username: "Unknown",
+            full_name: "Unknown",
+          };
+
+  return {
+    id: msg.id,
+    conversation: msg.conversation,
+    sender: senderObj,
+    body: msg.body,
+    image: msg.image,
+    reply_to: msg.reply_to,
+    reply_to_info: msg.reply_to_info,
+    is_read: msg.is_read,
+    created_at: msg.created_at,
+  };
 }
 
 export function useDisputeSocket(
@@ -92,13 +125,19 @@ export function useDisputeSocket(
       }
 
       if (parsed.type === "chat_message") {
-        const msg = parsed.message;
+        const msg = mapMsg(parsed.message);
         const convId = msg.conversation;
 
-        setMessagesByConversation((prev) => ({
-          ...prev,
-          [convId]: [...(prev[convId] ?? []), msg],
-        }));
+        setMessagesByConversation((prev) => {
+          const existing = prev[convId] ?? [];
+          const exists = existing.some((m) => m.id === msg.id);
+          return {
+            ...prev,
+            [convId]: exists
+              ? existing.map((m) => (m.id === msg.id ? msg : m))
+              : [...existing, msg],
+          };
+        });
 
         const isFromSelf = msg.sender.id === currentUserId;
         const isPanelOpen = openConversationRef.current === convId;
@@ -145,6 +184,24 @@ export function useDisputeSocket(
     };
   }, [accessToken, connect]);
 
+  // ── Load message history ───────────────────────────────────────────────────
+  const loadHistory = useCallback(async (conversationId: string) => {
+    const res = await getConversationMessagesAction(conversationId);
+    if (res.success && res.data) {
+      const mapped = res.data.results.map((m) => mapMsg(m));
+
+      setMessagesByConversation((prev) => {
+        const existing = prev[conversationId] ?? [];
+        const existingIds = new Set(existing.map((m) => m.id));
+        const filteredNew = mapped.filter((m) => !existingIds.has(m.id));
+        return {
+          ...prev,
+          [conversationId]: [...existing, ...filteredNew],
+        };
+      });
+    }
+  }, []);
+
   // ── Send a message ─────────────────────────────────────────────────────────
   const sendMessage = useCallback((conversationId: string, body: string) => {
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
@@ -181,6 +238,7 @@ export function useDisputeSocket(
     sendMessage,
     markRead,
     status,
+    loadHistory,
   };
 }
 

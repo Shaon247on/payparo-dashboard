@@ -119,3 +119,13 @@ export async function getValidAccessToken(): Promise<string | null> {
 
   return refreshResult.data.accessToken;
 }
+
+/**
+ * Background action to ensure the session cookie is synchronized on the client.
+ * Because Server Components cannot set cookies during initial SSR, this Server
+ * Action can be called on mount by a client component to write the refreshed
+ * cookie if it was updated in-memory during render.
+ */
+export async function syncSessionAction(): Promise<void> {
+  await getValidAccessToken();
+}
