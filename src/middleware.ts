@@ -75,11 +75,19 @@ export function middleware(req: NextRequest) {
 
   // ── 3. Already logged in → skip auth pages ───────────────────────────────
   const isAuthPage = AUTH_PATHS.some((p) => matchesPath(pathname, p));
-  if (isAuthPage && hasSession) {
-    const url = req.nextUrl.clone();
-    url.pathname = ROLE_HOME[role] ?? "/dashboard";
-    url.search = "";
-    return NextResponse.redirect(url);
+  if (isAuthPage) {
+    if (req.nextUrl.searchParams.has("expired")) {
+      const res = NextResponse.next();
+      res.cookies.delete(SESSION_COOKIE);
+      res.cookies.delete(ROLE_COOKIE);
+      return res;
+    }
+    if (hasSession) {
+      const url = req.nextUrl.clone();
+      url.pathname = ROLE_HOME[role] ?? "/dashboard";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
   }
 
   return NextResponse.next();

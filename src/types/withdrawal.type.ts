@@ -13,6 +13,8 @@ export interface UserWithdrawal {
   paypal_email: string | null;
   bank_name: string | null;
   account_number_last4: string | null;
+  account_number: string | null;
+  routing_number: string | null;
   transaction_ref: string;
   status: UserWithdrawalStatus;
   status_display: string;

@@ -9,13 +9,30 @@ import type { PaginatedPendingKycResponse, PendingKycSubmission } from "@/action
 import { reviewKycAction } from "@/actions/kyc.action";
 import KYCReviewModal from "./KYCReviewModal";
 
-export default function PendingKycPage({ data, initialStatus }: { data: PaginatedPendingKycResponse, initialStatus: string }) {
+export default function PendingKycPage({
+  data,
+  initialStatus,
+  currentPage,
+}: {
+  data: PaginatedPendingKycResponse;
+  initialStatus: string;
+  currentPage: number;
+}) {
   const router = useRouter();
   const [selectedSubmission, setSelectedSubmission] = useState<PendingKycSubmission | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState(initialStatus);
+
+  const hasNext = !!data.next;
+  const hasPrev = !!data.previous;
+  const totalCount = data.count;
+  const hasExtraPages = hasNext || hasPrev || currentPage > 1;
+
+  const getPageUrl = (p: number) => {
+    return `/dashboard/kyc-pending?status=${filter}&page=${p}`;
+  };
 
   const openModal = (submission: PendingKycSubmission) => {
     setSelectedSubmission(submission);
@@ -143,6 +160,43 @@ export default function PendingKycPage({ data, initialStatus }: { data: Paginate
           </table>
         </div>
       </div>
+
+      {/* Pagination */}
+      {hasExtraPages && (
+        <div className="flex items-center justify-between pt-4 border-t border-white/10">
+          <div className="text-xs text-white/40">
+            Showing Page {currentPage} (Total {totalCount} requests)
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                if (hasPrev) router.push(getPageUrl(currentPage - 1));
+              }}
+              disabled={!hasPrev}
+              className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all duration-150 ${
+                hasPrev
+                  ? "border-white/10 bg-white/5 text-white hover:bg-white/10 cursor-pointer"
+                  : "border-white/5 bg-transparent text-white/20 pointer-events-none"
+              }`}
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => {
+                if (hasNext) router.push(getPageUrl(currentPage + 1));
+              }}
+              disabled={!hasNext}
+              className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all duration-150 ${
+                hasNext
+                  ? "border-white/10 bg-white/5 text-white hover:bg-white/10 cursor-pointer"
+                  : "border-white/5 bg-transparent text-white/20 pointer-events-none"
+              }`}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
       {selectedSubmission && (
         <KYCReviewModal

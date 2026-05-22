@@ -31,5 +31,11 @@ export default async function Page({ searchParams }: PageProps) {
     );
   }
 
-  return <PendingKycPage data={result.data} initialStatus={status || "under_review"} />;
+  return (
+    <PendingKycPage
+      data={result.data}
+      initialStatus={status || "under_review"}
+      currentPage={page ? Number(page) : 1}
+    />
+  );
 }

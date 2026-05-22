@@ -107,7 +107,9 @@ export async function refreshAccessTokenAction(): Promise<
 
 export async function getValidAccessToken(): Promise<string | null> {
   const session = await getSession();
-  if (!session) return null;
+  if (!session) {
+    redirect("/login?expired=1");
+  }
 
   if (!isAccessTokenExpired(session)) {
     return session.accessToken;
@@ -115,7 +117,9 @@ export async function getValidAccessToken(): Promise<string | null> {
 
   // Try to refresh
   const refreshResult = await refreshAccessTokenAction();
-  if (!refreshResult.success) return null;
+  if (!refreshResult.success) {
+    redirect("/login?expired=1");
+  }
 
   return refreshResult.data.accessToken;
 }

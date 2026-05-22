@@ -107,13 +107,12 @@ export default function UserWithdrawalActions({ withdrawal }: Props) {
             </Button>
             <Button
               size="sm"
-              variant="ghost"
               onClick={() => {
                 setAction(null);
                 setError("");
               }}
               disabled={isPending}
-              className="text-white/50 hover:text-white/80 text-xs"
+              className="bg-transparent hover:bg-white/10 text-white/50 hover:text-white border border-white/10 text-xs font-semibold"
             >
               Cancel
             </Button>

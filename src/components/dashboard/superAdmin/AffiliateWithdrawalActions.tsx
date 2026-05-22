@@ -154,9 +154,8 @@ export default function AffiliateWithdrawalActions({ withdrawal }: Props) {
             </Button>
             <Button
               size="sm"
-              variant="ghost"
               onClick={() => setAction(null)}
-              className="text-white/50 text-xs"
+              className="bg-transparent hover:bg-white/10 text-white/50 hover:text-white border border-white/10 text-xs font-semibold"
             >
               Cancel
             </Button>

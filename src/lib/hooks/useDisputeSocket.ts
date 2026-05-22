@@ -96,7 +96,9 @@ export function useDisputeSocket(
     };
 
     ws.onclose = (e) => {
-      wsRef.current = null;
+      if (wsRef.current === ws) {
+        wsRef.current = null;
+      }
       if (!isMountedRef.current) return; // deliberate cleanup — don't reconnect
 
       setStatus("disconnected");

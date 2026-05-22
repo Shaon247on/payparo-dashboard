@@ -8,6 +8,8 @@ import SearchInput from "@/components/shared/SearchInput";
 import StatusFilter from "@/components/shared/StatusFilter";
 import Link from "next/link";
 
+import { cn } from "@/lib/utils";
+
 const STATUS_OPTIONS = [
   { label: "Pending", value: "pending" },
   { label: "Approved", value: "approved" },
@@ -26,14 +28,49 @@ interface PageProps {
   searchParams: Promise<{ q?: string; status?: string; page?: string }>;
 }
 
+function getPaginationUrls(
+  currentSearchParams: { q?: string; status?: string; page?: string },
+  hasNext: boolean,
+  hasPrev: boolean
+) {
+  const currentPage = currentSearchParams.page ? Number(currentSearchParams.page) : 1;
+  const buildUrlForPage = (p: number) => {
+    const params = new URLSearchParams();
+    Object.entries(currentSearchParams).forEach(([k, v]) => {
+      if (v && k !== "page") params.set(k, v);
+    });
+    if (p > 1) params.set("page", String(p));
+    const str = params.toString();
+    return `/dashboard/affiliates${str ? `?${str}` : ""}`;
+  };
+
+  return {
+    currentPage,
+    prevUrl: hasPrev ? buildUrlForPage(currentPage - 1) : "#",
+    nextUrl: hasNext ? buildUrlForPage(currentPage + 1) : "#",
+    hasExtraPages: hasNext || hasPrev || currentPage > 1,
+  };
+}
+
 export default async function AdminAffiliatesPage({ searchParams }: PageProps) {
-  const { q, status, page } = await searchParams;
+  const resolvedSearchParams = await searchParams;
+  const { q, status, page } = resolvedSearchParams;
 
   const result = await getAdminAffiliatesAction({
     q: q ?? undefined,
     status: status ?? undefined,
     page: page ? Number(page) : 1,
   });
+
+  const hasNext = result.success ? !!result.data.next : false;
+  const hasPrev = result.success ? !!result.data.previous : false;
+  const totalCount = result.success ? result.data.count : 0;
+
+  const { currentPage, prevUrl, nextUrl, hasExtraPages } = getPaginationUrls(
+    resolvedSearchParams,
+    hasNext,
+    hasPrev
+  );
 
   return (
     <div className="space-y-6">
@@ -81,7 +118,42 @@ export default async function AdminAffiliatesPage({ searchParams }: PageProps) {
           <span>{result.error}</span>
         </div>
       ) : (
-        <AffiliateTable applications={result.data.results} />
+        <>
+          <AffiliateTable applications={result.data.results} />
+
+          {/* Pagination */}
+          {hasExtraPages && (
+            <div className="flex items-center justify-between pt-4 border-t border-white/5">
+              <div className="text-xs text-white/40">
+                Showing Page {currentPage} (Total {totalCount} applications)
+              </div>
+              <div className="flex items-center gap-2">
+                <Link
+                  href={prevUrl}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all duration-150",
+                    hasPrev
+                      ? "border-white/10 bg-white/5 text-white hover:bg-white/10"
+                      : "border-white/5 bg-transparent text-white/20 pointer-events-none"
+                  )}
+                >
+                  Previous
+                </Link>
+                <Link
+                  href={nextUrl}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all duration-150",
+                    hasNext
+                      ? "border-white/10 bg-white/5 text-white hover:bg-white/10"
+                      : "border-white/5 bg-transparent text-white/20 pointer-events-none"
+                  )}
+                >
+                  Next
+                </Link>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -310,6 +310,13 @@ function AffiliateWithdrawalCard({ withdrawal }: { withdrawal: AdminAffiliateWit
               </div>
             </div>
 
+            {withdrawal.status === "rejected" && withdrawal.rejection_reason && (
+              <div className="p-3 rounded-lg border border-red-500/10 bg-red-500/5 text-rose-400 text-xs">
+                <span className="font-semibold block mb-0.5">Rejection Message:</span>
+                {withdrawal.rejection_reason}
+              </div>
+            )}
+
             <div className="flex items-center gap-4">
               {withdrawal.cfdi_invoice_url && (
                 <a
@@ -377,13 +384,13 @@ function UserWithdrawalCard({ withdrawal }: { withdrawal: UserWithdrawal }) {
               </Badge>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
               <div>
                 <p className="text-white/40 mb-0.5">Method</p>
                 <p className="text-white/70 capitalize font-medium">{withdrawal.method}</p>
               </div>
               {withdrawal.method === "paypal" ? (
-                <div>
+                <div className="lg:col-span-2">
                   <p className="text-white/40 mb-0.5">PayPal Email</p>
                   <p className="text-white/70">{withdrawal.paypal_email || "N/A"}</p>
                 </div>
@@ -396,10 +403,14 @@ function UserWithdrawalCard({ withdrawal }: { withdrawal: UserWithdrawal }) {
                   <div>
                     <p className="text-white/40 mb-0.5">Account Number</p>
                     <p className="text-white/70 font-mono">
-                      {withdrawal.account_number_last4
+                      {withdrawal.account_number || (withdrawal.account_number_last4
                         ? `•••• ${withdrawal.account_number_last4}`
-                        : "N/A"}
+                        : "N/A")}
                     </p>
+                  </div>
+                  <div>
+                    <p className="text-white/40 mb-0.5">Routing / Swift Code</p>
+                    <p className="text-white/70 font-mono">{withdrawal.routing_number || "N/A"}</p>
                   </div>
                 </>
               )}
@@ -412,6 +423,13 @@ function UserWithdrawalCard({ withdrawal }: { withdrawal: UserWithdrawal }) {
                 <p className="text-emerald-400 font-bold">{withdrawal.net_amount} MXN</p>
               </div>
             </div>
+
+            {withdrawal.status === "failed" && withdrawal.description && (
+              <div className="p-3 rounded-lg border border-red-500/10 bg-red-500/5 text-rose-400 text-xs">
+                <span className="font-semibold block mb-0.5">Rejection Message:</span>
+                {withdrawal.description}
+              </div>
+            )}
 
             <div className="flex items-center gap-4 text-xs">
               <span className="text-white/30">
