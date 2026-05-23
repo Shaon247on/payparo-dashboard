@@ -280,7 +280,7 @@ export default function DisputeManagementPage({
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
               <Input
                 type="text"
-                placeholder="Search by order ID, product name, claimant name..."
+                placeholder="Search by order ID, item name, claimant name..."
                 value={searchVal}
                 onChange={(e) => setSearchVal(e.target.value)}
                 className="bg-[#0a0c10] border-white/5 text-white pl-10 pr-4 rounded-xl h-11 focus-visible:ring-[#0091e5]/50 placeholder:text-white/20"

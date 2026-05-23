@@ -13,6 +13,7 @@ import {
   Link2,
   DollarSign,
   UserCheck,
+  Megaphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +42,7 @@ const adminNavItems = [
     href: "/dashboard/withdrawals",
     icon: DollarSign,
   },
+  { label: "Marketing", href: "/dashboard/marketing", icon: Megaphone },
   { label: "Admin", href: "/dashboard/admin", icon: UserCog },
 ];
 

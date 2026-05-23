@@ -64,7 +64,7 @@ export default async function Page({ searchParams }: PageProps) {
         <div className="flex flex-col sm:flex-row gap-3">
           <SearchInput
             paramKey="q"
-            placeholder="Search by product, order ID, reason…"
+            placeholder="Search by item, order ID, reason…"
           />
           <StatusFilter
             paramKey="status"

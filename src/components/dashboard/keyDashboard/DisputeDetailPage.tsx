@@ -333,7 +333,9 @@ export default function DisputeDetailPage({
               <CardContent className="px-5 pb-5 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-white/40 text-xs mb-1">Product</p>
+                    <p className="text-white/40 text-xs mb-1">
+                      {dispute.escrow_info.item_type === "service" ? "Service" : "Product"}
+                    </p>
                     <p className="text-white text-sm font-medium">
                       {dispute.escrow_info.product_name}
                     </p>
