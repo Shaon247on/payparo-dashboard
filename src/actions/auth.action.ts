@@ -38,6 +38,8 @@ export async function loginAction(
 
   // 2. Call the backend
   const result = await apiLogin(parsed.data);
+
+  console.log("login api response:", result)
   if (!result.ok) {
     return { success: false, error: result.error };
   }
